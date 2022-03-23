@@ -3,7 +3,7 @@ name: "modsecurity docker images CI workflow"
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ test ]
 
 
 jobs:
@@ -79,3 +79,20 @@ jobs:
         apt-cache show libapache2-mod-security2 | grep Version
         apt-cache show libapache2-mod-security2 
         apt-cache showpkg libapache2-mod-security2 
+        #Copy the default ModSecurity configuration file to a new file
+        sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+        # Download OWASP Core Rule Set
+        # https://coreruleset.org/installation/
+        wget https://github.com/coreruleset/coreruleset/archive/refs/tags/v3.3.2.zip
+        echo -n '88f336ba32a89922cade11a4b8e986f2e46a97cf v3.3.2.zip' | sha1sum -c -
+        sudo apt-get install unzip -y
+        unzip v3.3.2.zip
+        # Move the CRS setup file from the new directory into your ModSecurity directory
+        sudo mv coreruleset-3.3.2/crs-setup.conf.example /etc/modsecurity/crs-setup.conf
+        # (Optional but recommended) Move the rules directory from the new directory to your ModSecurity directory
+        sudo mv coreruleset-3.3.2/rules/ /etc/modsecurity/
+        #ensure it’ll load ModSecurity rules
+        # IncludeOptional /etc/modsecurity/*.conf
+        # Include /etc/modsecurity/rules/*.conf
+        cat /etc/apache2/mods-enabled/security2.conf | grep modsecurity
+        
